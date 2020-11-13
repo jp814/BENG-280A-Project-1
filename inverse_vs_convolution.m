@@ -41,7 +41,7 @@ imagesc(I); title('original image'); axis('square'); colormap('gray');
 
 first_projection_angle=0;
 last_projection_angle=180;
-delta_theta=0.5;
+delta_theta=0.2;
 
 
 %% from elliott's code
@@ -58,15 +58,15 @@ delta_theta=0.5;
 %%
 
 
-filtinv = 1; 
-convolution = 0;
+filtinv = 0; 
+convolution = 1;
 
 % set the number of theta views
 theta=first_projection_angle:delta_theta:last_projection_angle;
 %
 % step 1 create projection of image
 rad_I=radon(I,theta);
-figure('Name','g(l,theta)'); imagesc(rad_I); title('projections g(l,theta) - Radon Transform'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
+figure('Name','g(l,theta)'); imagesc(rad_I); title('projections g(l,theta) : Radon Transform'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
 [N_l,N_theta]=size(rad_I);
 %%
 if filtinv == 1 
@@ -87,64 +87,80 @@ end
 %%
 if convolution == 1 
      % step 2: create filter
-     
      %step 3: fourier transform filter 
      
+      y = sinc(-4*pi:.1:4*pi);
+      figure, plot(y);
+     
      % step 4: convolute image projection with fourier transform filter
+     
+     conv_2d = zeros(367,361);
+     for theta_cnt = 1:N_theta
+         conv_back = conv(rad_I(:,theta_cnt), y);
+         conv_back_cropped = conv_back(length(y)/2: length(conv_back)-length(y)/2);
+        conv_2d(:, theta_cnt) = conv_back_cropped;
+     end
+     
+   
+     figure('Name','g(l,theta)'); imagesc(conv_2d); title('projections g(l,theta) : Radon Transform + Convolution'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
+     
+     figure('Name','g(l,theta)'); imagesc(iradon(rad_I, theta, 'none')); title('projections g(l,theta) : Backprojection'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
+    figure('Name','g(l,theta)'); imagesc(iradon(conv_2d, theta, 'none')); title('projections g(l,theta) : Convolution Backprojection'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
+     %   figure, imagesc(iradon(conv_back_2d,theta, 'none')); title('convolution reconstruction');
     
 end 
 %%
 % step 5. create back projection 
 
 
-inv_rad_I=iradon(rad_I,theta, 'none');
+inv_rad_I=iradon(rad_I,theta);
 
 
 figure('Name','Original - Reconstructed'); imagesc(I - inv_rad_I(2:257, 2:257)); title('Original - Reconstructed'); axis('square');
 
 
 
-
-
-%% elliott's code again for adding noise & filters 
-% try different filter kernels for the inverse radon transform, for example
-% inv_rad_I=iradon(rad_I,theta,'hamming');
-
-
-figure('Name','noise free iradon{g(l,theta)}','Position',[1 420 400 400]); imagesc(inv_rad_I); title('Inverse Radon of noise free Projections'); axis('square'); colormap('gray')
-%
-% add noise to the "raw data"
-%
-data_peak=max(max(rad_I));
-raw_noise=rand(N_l,N_theta);
-figure('Name','raw noise','Position',[20 20 400 400]); imagesc(raw_noise); title('Raw Noise to add to projections'); axis('square');
-%
-scaled_noise=raw_noise*(data_peak/data_peak_to_noise_ratio); 
-nse_rad_I=rad_I+scaled_noise;
-%
-% try smoothing the raw data to increase the SNR
 % 
-% invent your own filters to experiment with smoothing the data in
-% different directions...
-%
-smoothing=1
-if smoothing
-h=ones(4,4)/16;
-filt_nse_rad_I=conv2(nse_rad_I,h,'same');
-% note: the 'same' parameter cuts off extra data post convolution
-nse_rad_I=filt_nse_rad_I;
-figure('Name','g(l,theta) * filter','Position',[401 420 400 400]); 
-imagesc(filt_nse_rad_I); title('3x3 Filtered Projections'); axis('square');
-end
-    
-figure('Name','g(l,theta) + scaled_noise','Position',[801 420 400 400]); 
-imagesc(nse_rad_I); title('Noisy Projections'); axis('square');
-%
-inv_nse_rad_I=iradon(nse_rad_I,theta,'ram-lak');
-%
-%
-figure('Name','iradon{ g(l,theta) + scaled_noise}','Position',[401 420 400 400]); 
-imagesc(inv_nse_rad_I); title('Inverse Radon of Noisy Projections'); axis('square'); colormap(gray);
-
-
-%%
+% 
+% %% elliott's code again for adding noise & filters 
+% % try different filter kernels for the inverse radon transform, for example
+% % inv_rad_I=iradon(rad_I,theta,'hamming');
+% 
+% 
+% figure('Name','noise free iradon{g(l,theta)}','Position',[1 420 400 400]); imagesc(inv_rad_I); title('Inverse Radon of noise free Projections'); axis('square'); colormap('gray')
+% %
+% % add noise to the "raw data"
+% %
+% data_peak=max(max(rad_I));
+% raw_noise=rand(N_l,N_theta);
+% figure('Name','raw noise','Position',[20 20 400 400]); imagesc(raw_noise); title('Raw Noise to add to projections'); axis('square');
+% %
+% scaled_noise=raw_noise*(data_peak/data_peak_to_noise_ratio); 
+% nse_rad_I=rad_I+scaled_noise;
+% %
+% % try smoothing the raw data to increase the SNR
+% % 
+% % invent your own filters to experiment with smoothing the data in
+% % different directions...
+% %
+% smoothing=1
+% if smoothing
+% h=ones(4,4)/16;
+% filt_nse_rad_I=conv2(nse_rad_I,h,'same');
+% % note: the 'same' parameter cuts off extra data post convolution
+% nse_rad_I=filt_nse_rad_I;
+% figure('Name','g(l,theta) * filter','Position',[401 420 400 400]); 
+% imagesc(filt_nse_rad_I); title('3x3 Filtered Projections'); axis('square');
+% end
+%     
+% figure('Name','g(l,theta) + scaled_noise','Position',[801 420 400 400]); 
+% imagesc(nse_rad_I); title('Noisy Projections'); axis('square');
+% %
+% inv_nse_rad_I=iradon(nse_rad_I,theta,'ram-lak');
+% %
+% %
+% figure('Name','iradon{ g(l,theta) + scaled_noise}','Position',[401 420 400 400]); 
+% imagesc(inv_nse_rad_I); title('Inverse Radon of Noisy Projections'); axis('square'); colormap(gray);
+% 
+% 
+% %%
