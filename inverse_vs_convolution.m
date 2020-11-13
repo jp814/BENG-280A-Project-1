@@ -80,6 +80,7 @@ if filtinv == 1
     
     %step 4: inverse fourier transform 
     rad_I_transformed = ifft(rad_I_FFT);
+    %plot difference between original and inverse
     figure, imagesc(rad_I_transformed-rad_I);
 end 
 
