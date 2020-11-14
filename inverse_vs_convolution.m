@@ -91,7 +91,7 @@ if convolution == 1
      
       %y = sinc(-4*pi:.1:4*pi);
       
-      hanning_filter = hann(64);
+      hanning_filter = hann(128);
       hanning_filter = [hanning_filter(1:end-1); flip(hanning_filter)];
       
       filter = ifft(fftshift(hanning_filter));
@@ -121,7 +121,7 @@ end
 % step 5. create back projection 
 
 
-inv_rad_I=iradon(conv_back,theta);
+inv_rad_I=iradon(conv_back,theta,'None');
 figure('Name','Reconstructed Image')
 axis('square')
 colormap('gray')
