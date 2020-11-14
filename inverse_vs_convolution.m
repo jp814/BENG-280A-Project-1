@@ -41,7 +41,7 @@ imagesc(I); title('original image'); axis('square'); colormap('gray');
 
 first_projection_angle=0;
 last_projection_angle=180;
-delta_theta=0.2;
+delta_theta=0.1;
 
 
 %% from elliott's code
@@ -89,23 +89,31 @@ if convolution == 1
      % step 2: create filter
      %step 3: fourier transform filter 
      
-      y = sinc(-4*pi:.1:4*pi);
-      figure, plot(y);
+      %y = sinc(-4*pi:.1:4*pi);
+      
+      hanning_filter = hann(64);
+      hanning_filter = [hanning_filter(1:end-1); flip(hanning_filter)];
+      
+      filter = ifft(fftshift(hanning_filter));
+      filter = abs(fftshift(filter)); 
+      figure, plot(filter);
      
      % step 4: convolute image projection with fourier transform filter
      
+     rad_I = abs(rad_I); % I added this
+     
      conv_2d = zeros(367,361);
      for theta_cnt = 1:N_theta
-         conv_back = conv(rad_I(:,theta_cnt), y);
-         conv_back_cropped = conv_back(length(y)/2: length(conv_back)-length(y)/2);
-        conv_2d(:, theta_cnt) = conv_back_cropped;
+         conv_back(:,theta_cnt) = conv(squeeze(rad_I(:,theta_cnt)), filter);
+         %conv_back_cropped = conv_back(length(filter)/2: length(conv_back)-length(filter)/2);
+        %conv_2d(:, theta_cnt) = conv_back_cropped;
      end
      
    
-     figure('Name','g(l,theta)'); imagesc(conv_2d); title('projections g(l,theta) : Radon Transform + Convolution'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
+     %figure('Name','g(l,theta)'); imagesc(conv_2d); title('projections g(l,theta) : Radon Transform + Convolution'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
      
-     figure('Name','g(l,theta)'); imagesc(iradon(rad_I, theta, 'none')); title('projections g(l,theta) : Backprojection'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
-    figure('Name','g(l,theta)'); imagesc(iradon(conv_2d, theta, 'none')); title('projections g(l,theta) : Convolution Backprojection'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
+     %figure('Name','g(l,theta)'); imagesc(iradon(rad_I, theta, 'none')); title('projections g(l,theta) : Backprojection'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
+   % figure('Name','g(l,theta)'); imagesc(iradon(conv_2d, theta, 'none')); title('projections g(l,theta) : Convolution Backprojection'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
      %   figure, imagesc(iradon(conv_back_2d,theta, 'none')); title('convolution reconstruction');
     
 end 
@@ -113,10 +121,15 @@ end
 % step 5. create back projection 
 
 
-inv_rad_I=iradon(rad_I,theta);
+inv_rad_I=iradon(conv_back,theta);
+figure('Name','Reconstructed Image')
+axis('square')
+colormap('gray')
+imagesc(inv_rad_I)
 
 
-figure('Name','Original - Reconstructed'); imagesc(I - inv_rad_I(2:257, 2:257)); title('Original - Reconstructed'); axis('square');
+%figure('Name','Original - Reconstructed'); imagesc(I - inv_rad_I(2:257, 2:257)); title('Original - Reconstructed'); axis('square'); colormap('gray');
+
 
 
 
