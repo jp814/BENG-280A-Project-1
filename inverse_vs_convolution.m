@@ -95,7 +95,7 @@ if convolution == 1
       hanning_filter = [hanning_filter(1:end-1); flip(hanning_filter)];
       
       filter = ifft(fftshift(hanning_filter));
-      filter = abs(fftshift(filter)); 
+      filter = real(fftshift(filter)); 
       figure, plot(filter);
      
      % step 4: convolute image projection with fourier transform filter
