@@ -43,7 +43,7 @@ imagesc(I); title('original image'); axis('square'); colormap('gray');
 
 first_projection_angle=0;
 last_projection_angle=180;
-delta_theta=0.1;
+delta_theta=0.5;
 
 
 %% from elliott's code
@@ -69,6 +69,14 @@ theta=first_projection_angle:delta_theta:last_projection_angle;
 % step 1 create projection of image
 rad_I=radon(I,theta);
 figure('Name','g(l,theta)'); imagesc(rad_I); title('projections g(l,theta) : Radon Transform'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l'); colormap('gray');
+
+figure('Name','g(l,pi/2)');
+plot(1:numel(squeeze(rad_I(:,round(90/delta_theta)))),squeeze(rad_I(:,round(90/delta_theta))))
+title('g(l,pi/2)');
+xlabel('L')
+ylabel('Signal')
+
+
 [N_l,N_theta]=size(rad_I);
 %%
 if filtinv == 1 
@@ -97,8 +105,8 @@ if convolution == 1
       hanning_filter = hann(64);
       hanning_filter = [hanning_filter(1:end-1); flip(hanning_filter)];
       
-      %adopted from fltered_back_test
-      freqs = linspace(-1,1,N_theta);
+      %adopted from fltered_back_test (need to cite)
+      freqs = linspace(-pi/2,pi/2,N_theta);
       ram_lak = abs( freqs ); 
       figure, plot(ram_lak)
       title('Filter in Frequency Domain') 
@@ -126,7 +134,13 @@ if convolution == 1
      
      figure('Name','Convolution Backprojection','Position',[1 420 400 400]);
     imagesc(conv_back); title('Convolution Backprojection'); axis('square'); colormap('gray');
-   
+    
+    figure('Name','g(l,pi/2)*c(l)');
+    plot(1:numel(squeeze(conv_back(:,round(90/delta_theta)))),squeeze(conv_back(:,round(90/delta_theta))))
+    title('g(l,pi/2)*c(l)');
+    xlabel('L')
+    ylabel('Signal')
+    
      %figure('Name','g(l,theta)'); imagesc(conv_2d); title('projections g(l,theta) : Radon Transform + Convolution'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
      
      %figure('Name','g(l,theta)'); imagesc(iradon(rad_I, theta, 'none')); title('projections g(l,theta) : Backprojection'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
