@@ -34,6 +34,8 @@ I = imread('example_coronary_patient_000.tif');
 I = imresize(I, [256,256]); 
 I = double(I);
 
+%I = phantom('Modified Shepp-Logan',200);
+
 figure('Name','original image','Position',[1 420 400 400]);
 imagesc(I); title('original image'); axis('square'); colormap('gray');
 
@@ -91,16 +93,21 @@ if convolution == 1
      
       %y = sinc(-4*pi:.1:4*pi);
       
-      hanning_filter = hann(128);
+      
+      hanning_filter = hann(64);
       hanning_filter = [hanning_filter(1:end-1); flip(hanning_filter)];
       
-      filter = ifft(fftshift(hanning_filter));
+      %adopted from fltered_back_test
+      freqs = linspace(-1,1,N_theta);
+      ram_lak = abs( freqs ); 
+      
+      filter = ifft(fftshift(ram_lak));
       filter = real(fftshift(filter)); 
       figure, plot(filter);
      
      % step 4: convolute image projection with fourier transform filter
      
-     rad_I = abs(rad_I); % I added this
+     rad_I = (rad_I); % I added this
      
      conv_2d = zeros(367,361);
      for theta_cnt = 1:N_theta
@@ -121,12 +128,12 @@ end
 % step 5. create back projection 
 
 
-inv_rad_I=iradon(conv_back,theta,'None');
-figure('Name','Reconstructed Image')
-axis('square')
-colormap('gray')
-imagesc(inv_rad_I)
+inv_rad_I=iradon((conv_back),theta,'None');
 
+crop_iradI = inv_rad_I(round(end/2)-125:round(end/2)+125,round(end/2)-125:round(end/2)+125);
+
+figure('Name','Reconstructed Image','Position',[1 420 400 400]);
+imagesc(crop_iradI); title('Reconstructed image'); axis('square'); colormap('gray');
 
 %figure('Name','Original - Reconstructed'); imagesc(I - inv_rad_I(2:257, 2:257)); title('Original - Reconstructed'); axis('square'); colormap('gray');
 
