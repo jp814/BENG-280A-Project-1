@@ -68,7 +68,7 @@ theta=first_projection_angle:delta_theta:last_projection_angle;
 %
 % step 1 create projection of image
 rad_I=radon(I,theta);
-figure('Name','g(l,theta)'); imagesc(rad_I); title('projections g(l,theta) : Radon Transform'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
+figure('Name','g(l,theta)'); imagesc(rad_I); title('projections g(l,theta) : Radon Transform'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l'); colormap('gray');
 [N_l,N_theta]=size(rad_I);
 %%
 if filtinv == 1 
@@ -100,10 +100,18 @@ if convolution == 1
       %adopted from fltered_back_test
       freqs = linspace(-1,1,N_theta);
       ram_lak = abs( freqs ); 
+      figure, plot(ram_lak)
+      title('Filter in Frequency Domain') 
+      xlabel('Frequency') 
+      ylabel('Magnitude') 
+      
       
       filter = ifft(fftshift(ram_lak));
       filter = real(fftshift(filter)); 
       figure, plot(filter);
+      title('Filter in Spatial Domain') 
+      xlabel('n') 
+      ylabel('g(n)') 
      
      % step 4: convolute image projection with fourier transform filter
      
@@ -116,6 +124,8 @@ if convolution == 1
         %conv_2d(:, theta_cnt) = conv_back_cropped;
      end
      
+     figure('Name','Convolution Backprojection','Position',[1 420 400 400]);
+    imagesc(conv_back); title('Convolution Backprojection'); axis('square'); colormap('gray');
    
      %figure('Name','g(l,theta)'); imagesc(conv_2d); title('projections g(l,theta) : Radon Transform + Convolution'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
      
@@ -128,7 +138,7 @@ end
 % step 5. create back projection 
 
 
-inv_rad_I=iradon((conv_back),theta,'None');
+inv_rad_I=iradon(conv_back,theta,'None');
 
 crop_iradI = inv_rad_I(round(end/2)-125:round(end/2)+125,round(end/2)-125:round(end/2)+125);
 
