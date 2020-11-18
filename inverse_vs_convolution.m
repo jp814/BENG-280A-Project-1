@@ -42,26 +42,8 @@ imagesc(I); title('original image'); axis('square'); colormap('gray');
 % ADJUSTABLE PARAMETERS FOR IRADON - the set of projections used to produce the images
 
 first_projection_angle=0;
-last_projection_angle=180;
-delta_theta=0.5;
-
-
-%% from elliott's code
-% %change the level of the noise on raw data...
-% %
-% data_peak_to_noise_ratio=2.0;
-
-% change text to reflect parameters of the particular run
-% figure('Name','parameters of run','Position',[1201 604 240 201]);
-% text(0.1,0.9,['delta theta = ',num2str(delta_theta)],'Fontsize', 14)
-% text(0.1,0.7,'angles 0 through 180','Fontsize', 14)
-% text(0.1,0.5,['data SNR = ',num2str(data_peak_to_noise_ratio)],'Fontsize', 14)
-% text(0.1,0.3,'recon kernel = hamming','Fontsize', 14)
-%%
-
-
-filtinv = 0; 
-convolution = 1;
+last_projection_angle=179;
+delta_theta=1;
 
 % set the number of theta views
 theta=first_projection_angle:delta_theta:last_projection_angle;
@@ -76,39 +58,34 @@ title('g(l,pi/2)');
 xlabel('L')
 ylabel('Signal')
 
-
 [N_l,N_theta]=size(rad_I);
-%%
-if filtinv == 1 
-    % step 2: fourier transform of projected image
-    rad_I_FFT = fft(rad_I);   
-    Pr = real(rad_I_FFT); 
-    figure, plot(Pr);
-    
-    % step 3: TODO- multiply by filter 
-    
-    
-    %step 4: inverse fourier transform 
-    rad_I_transformed = ifft(rad_I_FFT);
-    %plot difference between original and inverse
-    figure, imagesc(rad_I_transformed-rad_I);
-end 
 
-%%
-if convolution == 1 
+tic
+
+%% Add noise (adopted from Elliot's Code)
+%change the level of the noise on raw data...
+data_peak_to_noise_ratio=20;
+
+data_peak=max(max(rad_I));
+raw_noise=rand(N_l,N_theta);
+figure('Name','raw noise','Position',[20 20 400 400]); imagesc(raw_noise); title('Raw Noise to add to projections'); axis('square');
+
+scaled_noise=raw_noise*(data_peak/data_peak_to_noise_ratio); 
+rad_I=rad_I+scaled_noise;
+
      % step 2: create filter
      %step 3: fourier transform filter 
      
       %y = sinc(-4*pi:.1:4*pi);
       
       
-      hanning_filter = hann(64);
+      hanning_filter = hann(N_theta/2);
       hanning_filter = [hanning_filter(1:end-1); flip(hanning_filter)];
       
       %adopted from fltered_back_test (need to cite)
-      freqs = linspace(-pi/2,pi/2,N_theta);
+      freqs = linspace(-1,1,N_theta);
       ram_lak = abs( freqs ); 
-      figure, plot(ram_lak)
+      figure, plot(hanning_filter)
       title('Filter in Frequency Domain') 
       xlabel('Frequency') 
       ylabel('Magnitude') 
@@ -118,7 +95,7 @@ if convolution == 1
       filter = real(fftshift(filter)); 
       figure, plot(filter);
       title('Filter in Spatial Domain') 
-      xlabel('n') 
+%       xlabel('n') 
       ylabel('g(n)') 
      
      % step 4: convolute image projection with fourier transform filter
@@ -147,23 +124,30 @@ if convolution == 1
    % figure('Name','g(l,theta)'); imagesc(iradon(conv_2d, theta, 'none')); title('projections g(l,theta) : Convolution Backprojection'); axis('square'); xlabel('projection angle theta'); ylabel('linear displacement - l');
      %   figure, imagesc(iradon(conv_back_2d,theta, 'none')); title('convolution reconstruction');
     
-end 
 %%
 % step 5. create back projection 
 
 
-inv_rad_I=iradon(conv_back,theta,'None');
-
+inv_rad_I=iradon(conv_back,theta,'linear','none');
+%inv_rad_I = iradon(rad_I,theta,'hamming');
+toc
 crop_iradI = inv_rad_I(round(end/2)-125:round(end/2)+125,round(end/2)-125:round(end/2)+125);
 
 figure('Name','Reconstructed Image','Position',[1 420 400 400]);
-imagesc(crop_iradI); title('Reconstructed image'); axis('square'); colormap('gray');
+imagesc(abs(crop_iradI)); title('Reconstructed image'); axis('square'); colormap('gray');
 
 %figure('Name','Original - Reconstructed'); imagesc(I - inv_rad_I(2:257, 2:257)); title('Original - Reconstructed'); axis('square'); colormap('gray');
 
+%% calculate SNR and other program parameters
 
+background = crop_iradI(225:250,1:25);
+figure('Name','Background','Position',[1 420 400 400]);
+imagesc(abs(background)); title('Background'); axis('square'); colormap('gray');
 
+max_signal_average = crop_iradI(112:137,75:100);
 
+SNRdiff = (mean(mean(max_signal_average))-mean(mean(background)))/std(reshape(background,[],1))
+%SNRdiff = (mean(mean(max_signal_average)))/std(reshape(crop_iradI,[],1))
 % 
 % 
 % %% elliott's code again for adding noise & filters 
